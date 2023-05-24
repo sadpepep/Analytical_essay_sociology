@@ -1,0 +1,307 @@
+---
+title: "Разведывательный анализ данных"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+  html_document: 
+    code_folding: hide
+---
+
+### Команда №6.
+
+Мирошин Пётр Петрович, БЭК-192.
+
+Тимофеева Дарья Александровна, БЭК-192.
+
+Абгарян Арен Арменакович, БЭК-194.
+
+Игнатова Елизавета Николаевна, БЭК-194.
+
+Остроумов Андрей Александрович, БЭК-194.
+
+Пономарев Павел-Рафаэль Павлович, БЭК-194.
+
+Сафронова Анна Зурабовна, БЭК-195.
+
+Щетинина Екатерина Андреевна, БЭК-195.
+
+\
+
+#### Цели:
+
+*1)* Определить необходимые для анализа переменные
+
+*2)* Изучить распределение потенциальных регрессоров
+
+*3)* Выявить взаимосвязи между регрессорами и объясняемой переменной (числом преступлений на душу населения)
+
+
+
+```{r echo = F, message = F, warning = F}
+knitr::opts_chunk$set(message = FALSE, warning=FALSE,comment=NA)
+```
+
+```{r echo = F, message = F, warning = F}
+library(tidyverse)
+library(readxl)
+library(kableExtra)
+data <- read_excel("group6_data.xlsx")
+library(ggplot2)
+data$region = data$region %>% as.factor()
+data$rural = data$rural %>% as.factor()
+```
+
+\
+
+В случае отсутствия значимой корреляционной взаимосвязи объясняемой переменной (*crimes*, *minor_crimes*) с ключевым регрессором (*alcohol*, *beer*) невозможно говорить об их каузальной связи. Поэтому отправной точкой разведывательного анализа является рассмотрение корреляции.
+
+#### **Корреляция объясняемой переменной с основным регрессором:**
+```{r echo = F, message = F, warning = F}
+corr <- function(x) {
+cor_f <- cor.test(data$alcohol, x)
+return(c(unname(cor_f$estimate), cor_f$p.value))
+}
+
+cor_crimes <- t(as.data.frame(corr(data$crimes)))
+colnames(cor_crimes) <- c('corr', 'p-value')
+rownames(cor_crimes) <- ''
+cor_crimes %>% kbl(caption = "") %>% kable_styling(full_width = F, position = "left") %>% row_spec(0, bold = T, color = "white", background = "#79ad9f")
+```
+
+
+```{r echo = F, message = F, warning = F}
+corr <- function(x) {
+cor_f <- cor.test(data$beer, x)
+return(c(unname(cor_f$estimate), cor_f$p.value))
+}
+
+cor_crimes <- t(as.data.frame(corr(data$crimes)))
+colnames(cor_crimes) <- c('corr', 'p-value')
+rownames(cor_crimes) <- ''
+cor_crimes %>% kbl(caption = "") %>% kable_styling(full_width = F, position = "left") %>% row_spec(0, bold = T, color = "white", background = "#79ad9f")
+```
+
+```{r echo = F, message = F, warning = F}
+corr <- function(x) {
+cor_f <- cor.test(data$alcohol, x)
+return(c(unname(cor_f$estimate), cor_f$p.value))
+}
+
+cor_crimes <- t(as.data.frame(corr(data$minor_crimes)))
+colnames(cor_crimes) <- c('corr', 'p-value')
+rownames(cor_crimes) <- ''
+cor_crimes %>% kbl(caption = "") %>% kable_styling(full_width = F, position = "left") %>% row_spec(0, bold = T, color = "white", background = "#79ad9f")
+```
+
+```{r echo = F, message = F, warning = F}
+corr <- function(x) {
+cor_f <- cor.test(data$beer, x)
+return(c(unname(cor_f$estimate), cor_f$p.value))
+}
+
+cor_crimes <- t(as.data.frame(corr(data$minor_crimes)))
+colnames(cor_crimes) <- c('corr', 'p-value')
+rownames(cor_crimes) <- ''
+cor_crimes %>% kbl(caption = "") %>% kable_styling(full_width = F, position = "left") %>% row_spec(0, bold = T, color = "white", background = "#79ad9f")
+```
+
+Довольно большая положительная корреляция наблюдается на 1%-м уровне значимости. Значит, причинно-следственная связь не исключена. 
+\
+
+#### **Используемые переменные:**
+
+Во избежание смещения оценки коэффициентов регрессоров, необходимо выполнение следующих условий: 
+\
+1) рассматриваемые переменные доллжны коррелировать с ключевым регрессором 
+\
+2) включенные переменные должны являться детерминантами зависимой переменной
+
+Пользуясь исследовательской интуицией и логикой, выдвинем предположения о существовании корреляций регрессоров с ключевой переменной (*alcohol*, *beer*):
+\
+  \  **Положительная взаимосвязь:**
+    \
+*bar,  urban* - чем больше доступность алкоголя, тем больше его употребление
+\
+*alcoholic* - чем больше страдающих алкогольной зависимостью, тем больше употребление спиртного
+\
+*income, savings* – алкоголь – нормальное благо, его потребление увеличивается с ростом дохода.
+\
+*males* – мужчины потребляют больше алкоголя, чем женщины
+\
+*migration* – рост числа мигрантов увеличивает степень маргинализации общества, что ведет к росту потребления алкоголя
+\
+*y_rainfall* – плохие погодные условия связаны с ростом депрессивных состояний и увеличением потребления алкоголя
+\
+*investig* - в регионах с большим употреблением спиртного совершается больше преступлений (в состоянии алкогольного опьянения), которые раскрыть легче, чем обычные преступления
+\
+*gini* – рост неравенства провоцирует распространение алкоголизма
+\
+*vrp, hdi* – рост благосостояния в регионе ведет к росту потребления легального алкоголя
+\
+  \  **Отрицательная взаимосвязь:**
+    \
+    
+*poverty, unemp, social* – снижение доходов и бедность ведут к снижению потребления легального алкоголя
+ \
+*educ* - чем более образованы граждане, тем меньше маргинализация населения, а значит и меньше употребление спиртного
+\
+*sun, jan_temp, july_temp* – согласно исследованиям, люди в более «теплых» регионах потребляют меньше алкоголя, чем люди в более «холодных» регионах
+\
+  \  **Взаимосвязь с категориальной переменной:**
+    \
+*religion* - в зависимости от причисления себя к той или иной конфессии регионы могут различаться по уровню употребления алкоголя
+
+Проверим данные предположения на практике.
+
+#### **Корреляции контрольных переменных с основным регрессором (alcohol):**
+
+```{r echo = F, message = F, warning = F}
+options("scipen"=100, "digits"=4)
+data_cor <- data %>% dplyr::select(-id, -alcohol, -region,-name, -crimes, -religion, -population, - beer, -rural)
+
+cor_table <- apply(data_cor, MARGIN = 2, FUN = corr)
+cor_table <- t(cor_table)
+colnames(cor_table) <- c('corr', 'p-value')
+cor_table <- as.data.frame(cor_table) %>% round(digits = 4) %>% arrange(-abs(corr))
+cor_table$corr <- as.character(cor_table$corr)
+cor_table[,1] <- as.character(cor_table[,1])
+p_t5 <- which(cor_table$`p-value` <= 0.05 & cor_table$`p-value` > 0.01)
+p_t10 <- which(cor_table$`p-value` <= 0.1 & cor_table$`p-value` > 0.05)
+p_t1 <- which(cor_table$`p-value` <= 0.01)
+cor_table[p_t5, 1] <- paste0(cor_table[p_t5, 1], "**")
+cor_table[p_t10, 1] <- paste0(cor_table[p_t10, 1], "*")
+cor_table[p_t1, 1] <- paste0(cor_table[p_t1, 1], "***")
+
+cor_table %>% kbl(caption = "Correlation table") %>% kable_material(c("striped", "hover")) %>% row_spec(0, bold = T, color = "white", background = "#79ad9f") %>% scroll_box(width = "100%", height = "400px")
+```
+\
+
+В виде графика отдельно рассмотрим корреляцию различных религий с употреблением алкоголя.
+
+```{r echo = F, message = F, warning = F}
+data %>%
+ggplot(aes(y = alcohol, x = religion)) + geom_boxplot(fill = "#79ad9f") + theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(colour = "black", size = 0.1))+ggtitle("Распределение потребления алкоголя на душу \nв зависимости от преобладающей религии")+ scale_x_discrete(labels=c('Христианство', "Ислам", "Буддизм"))
+```
+\
+
+Из графика видно, что *alcohol* по-разному распределен для разных типов *religion*.
+
+#### **Описательные статистики данных:**
+
+```{r echo = F, message = F, warning = F}
+library(psych)
+
+Mode <- function(x) {
+ux <- unique(x)
+ux[which.max(tabulate(match(x, ux)))]
+}
+
+mode_tab <- as.data.frame(apply(data %>% dplyr::select(-region, -id, -name, -religion, -population,-rural), MARGIN = 2, FUN = Mode))
+
+des_stat <- data.frame(describe(data %>% dplyr::select(-region, -id, -name, -religion, -population,-rural), quant=c(0.25, 0.75))) %>% dplyr::select(-n, -trimmed, -mad, -se, -vars)# %>% round(digits = 2)
+
+des_stat$mode <- mode_tab[, "apply(data %>% dplyr::select(-region, -id, -name, -religion, -population, -rural), MARGIN = 2, FUN = Mode)"]# %>% round(digits = 2)
+
+options("scipen"=100, "digits"=4)
+des_stat %>% kbl(caption = 'Descriptive statistics') %>% kable_material(c("striped", "hover")) %>% row_spec(0, bold = T, color = "white", background = "#79ad9f") %>% scroll_box(width = "100%", height = "400px")
+
+library(openxlsx)
+des_stat1 = des_stat
+des_stat1$variable = rownames(des_stat)
+write.xlsx(des_stat1, '~/ecox/project-ecox/final/des_stat.xlsx')
+```
+\
+
+Так, при изучении распределения переменной *vrp* было выявлено, что в выборке есть очень большие значения. Разница между значениями vrp в отдельных регионах существенная, следовательно, в модели предпочтительнее будет рассматривать не абсолютное изменение, а относительное. Для этого в модель будет включен логарифм *vrp*.
+
+```{r echo = F, message = F, warning = F}
+lg_vrp_d <- describe(log(data$vrp)) %>% dplyr::select(skew, kurtosis)
+rownames(lg_vrp_d) <- ""
+lg_vrp_d %>% kbl() %>% kable_styling(full_width = F, position = "left") %>% row_spec(0, bold = T, color = "white", background = "#79ad9f")
+```
+
+#### **Анализ взаимосвязей переменных, проверка предположений:**
+
+
+*Предположение №1.* В зависимости от причисления себя к той или иной конфессии регионы могут различаться по уровню преступности, как и в случае с употреблением алкоголя.
+
+```{r echo = F, message = F, warning = F}
+data %>% 
+ggplot(aes(y = crimes, x = religion)) + geom_boxplot(fill = "#79ad9f") + theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(colour = "black", size = 0.1))+ggtitle("Распределение числа преступлений на душу \nв зависимости от преобладающей религии")+ scale_x_discrete(labels=c('Христианство', "Ислам", "Буддизм"))
+```
+\
+*Предположение №2.* Эффект от потребления алкоголя различается для регионов с разной степенью урбанизации. 
+
+На это есть несколько причин. В регионах с относительно большой долей сельского населения распространено потребление нелегального алкоголя (самогон, домашнее вино), которое не учитывается в официальных данных. Более того, в таких регионах в целом хуже работает статистика – не все преступления учитываются, не весь проданный алкоголь отражается в имеющихся данных. С ростом урбанизации растет и уровень продаж алкоголя, а также меняется культура его потребления (в сельской местности, например, не распространены рестораны и бары). Нами было произведено условное деление наблюдений на регионы с низким уровнем урбанизации (<70%) и высоким уровнем урбанизации (>70%). 70% - почти медианное значение. Для этих групп характерны различия в уровне потребления алкоголя, а также в уровне преступности. 
+
+```{r}
+data %>% 
+ggplot(aes(y =alcohol, x = rural)) + geom_boxplot(fill = "#79ad9f")+
+  ggtitle("Распределение потребления алкоголя на душу \nв зависимости от степени урбанизации")+
+  xlab(" ")+
+  ylab(" ") + theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(colour = "black", size = 0.1))+ scale_x_discrete(labels=c('Высокая урбанизация', "Низкая урбанизация"))
+```
+
+График показывает, что в регионах с низким уровнем урбанизации уровень потребления алкоголя в среднем действительно значительно ниже. 
+
+```{r}
+data %>% 
+ggplot(aes(y =crimes, x = rural)) + geom_boxplot(fill = "#79ad9f")+
+  ggtitle("Распределение числа преступлений на душу \nв зависимости от степени урбанизации")+
+  xlab(" ")+
+  ylab(" ") + theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(colour = "black", size = 0.1))+ scale_x_discrete(labels=c('Высокая урбанизация', "Низкая урбанизация"))
+```
+
+
+Также в среднем в регионах с низким уровнем урбанизации ниже уровень преступности, однако отличия в распределении не такие существенные, как в случае с потреблением алкоголя. 
+Наше интуитивное предположение заключается в том, что предельный эффект потребления алкоголя на число преступлений в этих группах будет различным.
+
+
+
+
+\
+Дальнейшие предположения не подразумевают нелинейной зависимости. Предположительная взаимосвязь оставшихся переменных с *crimes*:
+\
+  \  **Положительная корреляция:**
+    \
+*poverty, social* - чем меньше у граждан денег, тем чаще они преступают норму закона
+\
+*urban* - в городах легче регистрировать правонарушения, поэтому урбанизация будет положительно связана с преступностью
+\
+*migration* - чем более маргинализировано общество, тем больше совершается преступлений
+\
+*beer, bar, alcoholic* - чем больше алкоголизация граждан в регионе, тем чаще там совершаются правонарушения (исходное предположение исследования)
+\
+*y_rainfall* - чем условно хуже погода, тем хуже состояние людей и больше совершается преступлений
+\
+  \  **Отрицательная корреляция:**
+    \
+*sun, jan_temp, july_temp* - чем условно лучше погода, климат, тем лучше состояние людей и меньше совершается преступлений
+\
+*income, vrp, hdi* - чем больше доход, тем меньше люди заинтересованы в совершении противоправных деяний
+\
+*investig* - чем лучше работает следствие, тем менее охотно граждане нарушают закон
+
+```{r echo = F, message = F, warning = F}
+data_cor <- data %>% dplyr::select(-id, -crimes, -region,-name, -religion, -population, -alcohol, - beer, -minor_crimes, -rural)
+corr <- function(x) {
+cor_f <- cor.test(data$crimes, x)
+return(c(unname(cor_f$estimate), cor_f$p.value))
+}
+
+cor_table <- apply(data_cor, MARGIN = 2, FUN = corr)
+cor_table <- t(cor_table)
+colnames(cor_table) <- c('corr', 'p-value')
+cor_table <- as.data.frame(cor_table) %>% round(digits = 4) %>% arrange(-abs(corr))
+cor_table$corr <- as.character(cor_table$corr)
+cor_table[,1] <- as.character(cor_table[,1])
+p_t5 <- which(cor_table$`p-value` <= 0.05 & cor_table$`p-value` > 0.01)
+p_t10 <- which(cor_table$`p-value` <= 0.1 & cor_table$`p-value` > 0.05)
+p_t1 <- which(cor_table$`p-value` <= 0.01)
+cor_table[p_t5, 1] <- paste0(cor_table[p_t5, 1], "**")
+cor_table[p_t10, 1] <- paste0(cor_table[p_t10, 1], "*")
+cor_table[p_t1, 1] <- paste0(cor_table[p_t1, 1], "***")
+
+cor_table %>% kbl(caption = "Correlation table") %>% kable_material(c("striped", "hover")) %>% row_spec(0, bold = T, color = "white", background = "#79ad9f") %>% scroll_box(width = "100%", height = "400px")
+```
+

@@ -1,0 +1,155 @@
+---
+title: "Регрессионный анализ"
+output: html_document
+---
+
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(lmtest)
+library(stargazer)
+data = read_excel("~/ecox/project-ecox/joined_tables/group6_data.xlsx")
+
+```
+
+
+ Спецификация №1
+
+```{r}
+lm1 <- lm(crimes ~ 1 + alcohol + I(alcohol^2)+alcohol:rural + I(alcohol^2):rural+savings+males+urban+gini+migration+unemp+july_temp+y_rainfall+sun+jan_temp+log(vrp)+bar+income+poverty+social+hdi+alcoholic+educ+investig+religion,
+         data=data)
+
+cf1 <- coeftest(lm1, df=Inf, vcov=vcovHC, type="HC0")
+
+```
+
+
+Оценка предельного эффекта при rural = 0
+
+```{r}
+ME1_0 <- lm1 %>% margins_summary(variables = "alcohol", 
+                                at = list(alcohol = seq(1,28,by = 0.5),
+                                          rural = 0
+                                         ),
+                                vcov = vcovHC(lm1, type = "HC0"), 
+                                vce = "delta")
+ME1_0 %>% 
+  ggplot() +
+  geom_line(aes(alcohol, AME)) +
+  geom_ribbon(aes(x = alcohol, ymin = lower, ymax = upper),fill = '#79ad9f',alpha=0.5) +
+  geom_hline(yintercept = 0, col = "red", linetype = "dashed")+ theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(colour = "black", size = 0.1))+ggtitle("Предельный эффект alcohol на crimes\nrural=0")
+```
+
+
+Оценка предельного эффекта при rural = 1
+
+```{r}
+ME1_1 <- lm1 %>% margins_summary(variables = "alcohol", 
+                                at = list(alcohol = seq(1,28,by = 0.5),
+                                          rural = 1
+                                         ),
+                                vcov = vcovHC(lm1, type = "HC0"), 
+                                vce = "delta")
+ME1_1 %>% 
+  ggplot() +
+  geom_line(aes(alcohol, AME)) +
+  geom_ribbon(aes(x = alcohol, ymin = lower, ymax = upper),fill = 'grey70',alpha=0.5) +
+  geom_hline(yintercept = 0, col = "red", linetype = "dashed")+ theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(colour = "black", size = 0.1))+ggtitle("Предельный эффект alcohol на crimes\nrural=1")
+```
+
+
+ Спецификация №2
+
+```{r}
+lm2 <- lm(minor_crimes ~ 1 + alcohol + I(alcohol^2)+alcohol:rural + I(alcohol^2):rural+savings+males+urban+gini+migration+unemp+july_temp+y_rainfall+sun+jan_temp+log(vrp)+bar+income+poverty+social+hdi+alcoholic+educ+investig+religion,
+         data=data)
+
+cf2 <- coeftest(lm2, df=Inf, vcov=vcovHC, type="HC0")
+
+```
+
+
+Оценка предельного эффекта при rural = 0
+
+```{r}
+ME2_0 <- lm2 %>% margins_summary(variables = "alcohol", 
+                                at = list(alcohol = seq(1,28,by = 0.5),
+                                          rural = 0
+                                         ),
+                                vcov = vcovHC(lm2, type = "HC0"), 
+                                vce = "delta")
+ME2_0 %>% 
+  ggplot() +
+  geom_line(aes(alcohol, AME)) +
+  geom_ribbon(aes(x = alcohol, ymin = lower, ymax = upper),fill = 'grey70',alpha=0.5) +
+  geom_hline(yintercept = 0, col = "red", linetype = "dashed")+ theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(colour = "black", size = 0.1))+ggtitle("Предельный эффект alcohol на minor_crimes\nrural=0")
+```
+
+
+Оценка предельного эффекта при rural = 1
+
+```{r}
+ME2_1 <- lm2 %>% margins_summary(variables = "alcohol", 
+                                at = list(alcohol = seq(1,28,by = 0.5),
+                                          rural = 1
+                                         ),
+                                vcov = vcovHC(lm2, type = "HC0"), 
+                                vce = "delta")
+ME2_1 %>% 
+  ggplot() +
+  geom_line(aes(alcohol, AME)) +
+  geom_ribbon(aes(x = alcohol, ymin = lower, ymax = upper),fill = 'grey70',alpha=0.5) +
+  geom_hline(yintercept = 0, col = "red", linetype = "dashed")+ theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(colour = "black", size = 0.1))+ggtitle("Предельный эффект alcohol на minor_crimes\nrural=1")
+```
+
+
+ Спецификация №3
+
+```{r}
+lm3 <- lm(crimes ~ 1 + beer + I(beer^2)+beer:rural + I(beer^2):rural+savings+males+urban+gini+migration+unemp+july_temp+y_rainfall+sun+jan_temp+log(vrp)+bar+income+poverty+social+hdi+alcoholic+educ+investig+religion,
+         data=data)
+
+cf3 <- coeftest(lm3, df=Inf, vcov=vcovHC, type="HC0")
+
+```
+
+
+Оценка предельного эффекта при rural = 0
+
+```{r}
+ME3_0 <- lm3 %>% margins_summary(variables = "beer", 
+                                at = list(beer = seq(1,92,by = 1),
+                                          rural = 0
+                                         ),
+                                vcov = vcovHC(lm3, type = "HC0"), 
+                                vce = "delta")
+ME3_0 %>% 
+  ggplot() +
+  geom_line(aes(beer, AME)) +
+  geom_ribbon(aes(x = beer, ymin = lower, ymax = upper),fill = 'grey70',alpha=0.5) +
+  geom_hline(yintercept = 0, col = "red", linetype = "dashed")+ theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(colour = "black", size = 0.1))+ggtitle("Предельный эффект beer на crimes\nrural=0")
+```
+
+
+Оценка предельного эффекта при rural = 1
+
+```{r}
+ME3_1 <- lm3 %>% margins_summary(variables = "beer", 
+                                at = list(beer = seq(1,92,by = 1),
+                                          rural = 1
+                                         ),
+                                vcov = vcovHC(lm3, type = "HC0"), 
+                                vce = "delta")
+ME3_1 %>% 
+  ggplot() +
+  geom_line(aes(beer, AME)) +
+  geom_ribbon(aes(x = beer, ymin = lower, ymax = upper),fill = 'grey70',alpha=0.5) +
+  geom_hline(yintercept = 0, col = "red", linetype = "dashed")+ theme(panel.background = element_rect(fill = "white"), panel.grid.major = element_line(colour = "black", size = 0.1))+ggtitle("Предельный эффект beer на crimes\nrural=1")
+```
+
+
+
+
+
